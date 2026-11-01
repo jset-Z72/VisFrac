@@ -15,6 +15,28 @@ Class {
 	#package : 'Basic-VisRoassal'
 }
 
+{ #category : 'initialization' }
+VisRoasExample >> connectPresenters [
+    super connectPresenters.
+
+    self whenBuiltDo: [ 
+        self window ifNotNil: [ :winPresenter |
+            winPresenter window 
+                bindKeyCombination: $j asKeyCombination 
+                toAction: [ visCanvas boxDown ].
+				winPresenter window 
+                bindKeyCombination: $k asKeyCombination 
+                toAction: [ visCanvas boxUp ].
+				winPresenter window 
+                bindKeyCombination: $h asKeyCombination 
+                toAction: [ visCanvas boxLeft ].
+				winPresenter window 
+                bindKeyCombination: $l asKeyCombination 
+                toAction: [ visCanvas boxRight ]
+        ]
+    ]
+]
+
 { #category : 'layout' }
 VisRoasExample >> defaultLayout [
 
@@ -54,4 +76,12 @@ VisRoasExample >> initializeWindow: aWindow [
 	^ aWindow
 		title: 'VisRoas Vizualicer';
 		initialExtent: 700@400.
+]
+
+{ #category : 'accessing' }
+VisRoasExample >> visRoasCanvasGetter [
+	"comment stating purpose of instance-side method"
+	"scope: class-variables  &  instance-variables"
+
+	^ visCanvas.
 ]
