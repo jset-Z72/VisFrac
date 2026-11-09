@@ -26,7 +26,9 @@ Class {
 		'minScapeColor',
 		'fracSetColor',
 		'scale',
-		'genFunc'
+		'genFunc',
+		'bitmap',
+		'mapMask'
 	],
 	#category : 'Basic-VisRoassal',
 	#package : 'Basic-VisRoassal'
@@ -46,13 +48,47 @@ VisFracCanvas class >> defaultConfig [
 		
 		#canvasWidth -> 500.
 		#canvasHeight -> 500.
+		"Para el ejemplo del genFunc para pruebas."
+		#genFunc -> [ :x :c | 
+			| a b |
+			a := x x. b := x y.
+			((a raisedTo: 2) - (b raisedTo: 2))@(2 * a * b) + c.
+		].
+		#defaultC -> (0.3@0.1).
 	} asDictionary.
 ]
 
 { #category : 'execution' }
 VisFracCanvas >> drawFrac [
 
-	""
+	"Creación del fractal por defecto"
+	| form defaultConf width height c |
+	
+	defaultConf := self class defaultConfig.
+	width := defaultConf at: #canvasWidth. height := defaultConf at: #canvasHeight.
+	c := defaultConf at: #defaultC.
+	form := Form extent: width @ height depth: 32.
+	
+	1 to: width do: [ :w |
+		1 to: height do: [ :h |
+			| cScape z iterIndex|
+			iterIndex := 1. cScape := Color new.
+			(mapMask at: ((h-1)*width + w)) ifTrue: [
+				z := (w - (width / 2) / (200 * scale)) @ (h - (height / 2) / (200 * scale)).
+				[ ((((z x)*(z x)) + ((z y)*(z y))) <= 4.0) and: (iterIndex <= iterSize) ] whileTrue: [ 
+					z := genFunc value: z value: c.
+				].
+			].
+			cScape := (iterIndex = iterSize)
+					ifTrue: [ fracSetColor ]
+					ifFalse: [ minScapeColor ].
+				form at: w@h put: cScape.
+			
+		].
+	].
+	
+	bitmap form: form.
+	bitmap canvas signalUpdate.
 ]
 
 { #category : 'execution' }
@@ -65,7 +101,7 @@ VisFracCanvas >> drawFrac: aGenFunc [
 { #category : 'initialization' }
 VisFracCanvas >> initializePresenters [
 
-	| defaultConf |
+	| defaultConf width height |
 
 	super initializePresenters.
 
@@ -76,8 +112,21 @@ VisFracCanvas >> initializePresenters [
 	fracSetColor := defaultConf at: #fracSetColor.
 	scale := defaultConf at: #scale.
 	
-	self canvas extent: (defaultConf at: #canvasWidth)@(defaultConf at: #canvasHeight). 
-	self inform: (self canvas extent).
+	width := defaultConf at: #canvasWidth. height := defaultConf at: #canvasHeight. 
+	self canvas extent: width @ height.
+	
+	"Creación de la máscara para generar fractales"
+	mapMask := Array new: (width * height).
+	1 to: width do: [ :w |
+		1 to: height do: [ :h |
+			| result px py|
+			px := w - ((width / 2) round: 0). py := h - ((height / 2) round: 0).
+			result := ((((px*px) + (py*py)) sqrt / (200 * scale)) < 2).
+			mapMask at: ((h-1)*width+w) put: result.
+			].
+		].
+	bitmap := RSBitmap new.
+	self canvas add: bitmap.
 ]
 
 { #category : 'initialization' }
