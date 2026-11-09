@@ -52,9 +52,9 @@ VisFracCanvas class >> defaultConfig [
 		#genFunc -> [ :x :c | 
 			| a b |
 			a := x x. b := x y.
-			((a raisedTo: 2) - (b raisedTo: 2))@(2 * a * b) + c.
+			((a * a) - (b * b))@(2 * a * b) + c.
 		].
-		#defaultC -> (0.3@0.1).
+		#defaultC -> (0.3@0.5).
 	} asDictionary.
 ]
 
@@ -72,17 +72,17 @@ VisFracCanvas >> drawFrac [
 	1 to: width do: [ :w |
 		1 to: height do: [ :h |
 			| cScape z iterIndex|
-			iterIndex := 1. cScape := Color new.
-			(mapMask at: ((h-1)*width + w)) ifTrue: [
-				z := (w - (width / 2) / (200 * scale)) @ (h - (height / 2) / (200 * scale)).
-				[ ((((z x)*(z x)) + ((z y)*(z y))) <= 4.0) and: (iterIndex <= iterSize) ] whileTrue: [ 
+			iterIndex := 1.
+				z := ((w - (width / 2)) / (200 * scale)) @ ((h - (height / 2)) / (200 * scale)).
+				  [ ((((z x)*(z x)) + ((z y)*(z y))) <= 4.0) and: (iterIndex < iterSize) ] whileTrue: [ 
 					z := genFunc value: z value: c.
+					iterIndex := iterIndex + 1.
 				].
-			].
-			cScape := (iterIndex = iterSize)
+				cScape := (iterIndex = iterSize)
 					ifTrue: [ fracSetColor ]
 					ifFalse: [ minScapeColor ].
-				form at: w@h put: cScape.
+			
+			form colorAt: w@h put: cScape.
 			
 		].
 	].
@@ -111,12 +111,13 @@ VisFracCanvas >> initializePresenters [
 	minScapeColor := defaultConf at: #minScapeColor.
 	fracSetColor := defaultConf at: #fracSetColor.
 	scale := defaultConf at: #scale.
+	genFunc := defaultConf at: #genFunc. 
 	
 	width := defaultConf at: #canvasWidth. height := defaultConf at: #canvasHeight. 
 	self canvas extent: width @ height.
 	
 	"Creación de la máscara para generar fractales"
-	mapMask := Array new: (width * height).
+	"mapMask := Array new: (width * height).
 	1 to: width do: [ :w |
 		1 to: height do: [ :h |
 			| result px py|
@@ -124,9 +125,11 @@ VisFracCanvas >> initializePresenters [
 			result := ((((px*px) + (py*py)) sqrt / (200 * scale)) < 2).
 			mapMask at: ((h-1)*width+w) put: result.
 			].
-		].
+		]."
 	bitmap := RSBitmap new.
 	self canvas add: bitmap.
+	"La prueba de fuego"
+	self drawFrac.
 ]
 
 { #category : 'initialization' }
